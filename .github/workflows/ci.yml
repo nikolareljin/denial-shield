@@ -13,3 +13,5 @@ jobs:
       build_command: "./gradlew assembleDebug"
       # And gradlew test for unit tests
       test_command: "./gradlew test"
+      # Use Gradle lint instead of default Maven checkstyle
+      lint_command: "./gradlew lint"
