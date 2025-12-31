@@ -5,10 +5,10 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import com.denialshield.data.model.DenialClaim
 import com.denialshield.data.model.UserInfo
-import com.tomroush.pdfbox.pdmodel.PDDocument
-import com.tomroush.pdfbox.pdmodel.PDPage
-import com.tomroush.pdfbox.pdmodel.PDPageContentStream
-import com.tomroush.pdfbox.pdmodel.font.PDType1Font
+import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.pdmodel.PDPage
+import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
+import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -25,7 +25,7 @@ object PdfExporter {
             val page = PDPage()
             document.addPage(page)
             
-            PDPageContentStream(document, page).use { contentStream ->
+            PDPageContentStream(document, page).use { contentStream: PDPageContentStream ->
                 contentStream.beginText()
                 contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16f)
                 contentStream.setLeading(20f)
