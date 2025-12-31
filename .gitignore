@@ -2,12 +2,7 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.idea/
 .DS_Store
 /build
 /captures
@@ -28,3 +23,16 @@ local.properties
 
 # Google Services
 google-services.json
+
+# IDEs
+.vscode/
+.project
+.classpath
+.settings/
+*.launch
+*.factorypath
+.metadata/
+
+# System
+Thumbs.db
+desktop.ini

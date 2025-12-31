@@ -1,0 +1,15 @@
+name: CI
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  ci:
+    uses: nikolareljin/ci-helpers/.github/workflows/java.yml@production
+    with:
+      java_version: "17"
+      # Android projects usually use gradlew assembleDebug for build
+      build_command: "./gradlew assembleDebug"
+      # And gradlew test for unit tests
+      test_command: "./gradlew test"

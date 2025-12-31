@@ -1,11 +1,13 @@
 package com.denialshield.ui.screens
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.denialshield.data.model.DenialClaim
 import com.denialshield.ui.viewmodel.MainViewModel
+import com.denialshield.utils.PdfExporter
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,7 +30,9 @@ fun ClaimDetailScreen(
     val claims by viewModel.allClaims.collectAsState()
     val claim = claims.find { it.id == claimId }
     val isProcessing by viewModel.isProcessing.collectAsState()
+    val userInfo by viewModel.userInfo.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -40,14 +46,40 @@ fun ClaimDetailScreen(
                 actions = {
                     if (claim?.generatedRebuttal?.isNotEmpty() == true) {
                         IconButton(onClick = {
+                            val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("Medical Rebuttal", claim.generatedRebuttal)
+                            clipboardManager.setPrimaryClip(clip)
+                        }) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
+                        }
+                        IconButton(onClick = {
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putcharExtra(Intent.EXTRA_SUBJECT, "Medical Appeal Rebuttal")
-                                putcharExtra(Intent.EXTRA_TEXT, claim.generatedRebuttal)
+                                putExtra(Intent.EXTRA_SUBJECT, "Medical Appeal Rebuttal - ${claim.providerName}")
+                                putExtra(Intent.EXTRA_TEXT, claim.generatedRebuttal)
                             }
-                            context.startActivity(Intent.createChooser(intent, "Share Rebuttal"))
+                            context.startActivity(Intent.createChooser(intent, "Send Rebuttal"))
                         }) {
                             Icon(Icons.Default.Share, contentDescription = "Share")
+                        }
+                        
+                        IconButton(onClick = {
+                            val user = userInfo
+                            if (user != null) {
+                                scope.launch {
+                                    val uri = PdfExporter.exportToPdf(context, user, claim)
+                                    if (uri != null) {
+                                        val intent = Intent(Intent.ACTION_SEND).apply {
+                                            type = "application/pdf"
+                                            putExtra(Intent.EXTRA_STREAM, uri)
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        context.startActivity(Intent.createChooser(intent, "Share PDF"))
+                                    }
+                                }
+                            }
+                        }) {
+                            Icon(androidx.compose.material.icons.filled.PictureAsPdf, contentDescription = "Export PDF")
                         }
                     }
                 }
@@ -72,7 +104,7 @@ fun ClaimDetailScreen(
                 InfoSection("Reason", "${claim.denialReasonDescription} (${claim.denialReasonCode})")
                 InfoSection("Status", claim.status)
 
-                Divider()
+                HorizontalDivider()
 
                 Text(
                     "Extracted Policy Language",
@@ -85,7 +117,7 @@ fun ClaimDetailScreen(
                     Text(claim.policyLanguageCited, style = MaterialTheme.typography.bodyMedium)
                 }
 
-                Divider()
+                HorizontalDivider()
 
                 if (isProcessing) {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = androidx.compose.ui.Alignment.Center) {
@@ -143,9 +175,4 @@ fun InfoSection(label: String, value: String) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
         Text(value, style = MaterialTheme.typography.bodyLarge)
     }
-}
-
-// Extra helper for putExtra (Antigravity instruction: check for mistakes)
-fun Intent.putcharExtra(name: String, value: String?) {
-    this.putExtra(name, value)
 }

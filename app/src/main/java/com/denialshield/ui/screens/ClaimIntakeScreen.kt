@@ -1,19 +1,34 @@
 package com.denialshield.ui.screens
 
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.denialshield.data.model.DenialClaim
 import com.denialshield.ui.viewmodel.MainViewModel
+import java.io.File
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,45 +37,36 @@ fun ClaimIntakeScreen(
     onBack: () -> Unit,
     onNavigateToDetail: (Long) -> Unit
 ) {
+    val context = LocalContext.current
     var providerName by remember { mutableStateOf("") }
     var claimId by remember { mutableStateOf("") }
     var denialReasonCode by remember { mutableStateOf("") }
     var denialReasonDescription by remember { mutableStateOf("") }
     
-    val photoLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            // We need a claim ID first. 
-            // In a real app, we might save the claim first, then attach evidence.
-            viewModel.addClaim(DenialClaim(
-                providerName = providerName,
-                claimId = claimId,
-                denialReasonCode = denialReasonCode,
-                denialReasonDescription = denialReasonDescription,
-                status = "PROCESSING"
-            )) { id ->
-                viewModel.processDocument(id, it, isPdf = false) // Assuming photo
-                onNavigateToDetail(id)
-            }
+    val selectedUris = remember { mutableStateListOf<Uri>() }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Launcher for Gallery (Multiple)
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia()
+    ) { uris ->
+        selectedUris.addAll(uris)
+    }
+
+    // Launcher for Camera
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            selectedUris.add(tempCameraUri!!)
         }
     }
 
-    val pdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            viewModel.addClaim(DenialClaim(
-                providerName = providerName,
-                claimId = claimId,
-                denialReasonCode = denialReasonCode,
-                denialReasonDescription = denialReasonDescription,
-                status = "PROCESSING"
-            )) { id ->
-                viewModel.processDocument(id, it, isPdf = true)
-                onNavigateToDetail(id)
-            }
-        }
+    // Launcher for Files (PDFs)
+    val fileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        selectedUris.addAll(uris)
     }
 
     Scaffold(
@@ -103,7 +109,7 @@ fun ClaimIntakeScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            Divider()
+            HorizontalDivider()
             
             Text(
                 "Step 2: Denial Details",
@@ -126,55 +132,115 @@ fun ClaimIntakeScreen(
                 minLines = 3
             )
             
-            Divider()
+            HorizontalDivider()
             
             Text(
-                "Step 3: Upload Documents",
+                "Step 3: Documents (Evidence)",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
             
-            Text(
-                "Upload a photo of the denial letter or a PDF to extract policy language automatically.",
-                style = MaterialTheme.typography.bodySmall
-            )
-            
+            if (selectedUris.isNotEmpty()) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.height(100.dp)
+                ) {
+                    items(selectedUris) { uri ->
+                        Box {
+                            if (uri.toString().contains("pdf")) {
+                                Surface(
+                                    modifier = Modifier.size(100.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = MaterialTheme.shapes.small
+                                ) {
+                                    Icon(
+                                        Icons.Default.Description, 
+                                        contentDescription = null,
+                                        modifier = Modifier.padding(24.dp)
+                                    )
+                                }
+                            } else {
+                                AsyncImage(
+                                    model = uri,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(100.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                            IconButton(
+                                onClick = { selectedUris.remove(uri) },
+                                modifier = Modifier.align(Alignment.TopEnd)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.White)
+                            }
+                        }
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(
-                    onClick = { photoLauncher.launch("image/*") },
+                OutlinedButton(
+                    onClick = {
+                        val uri = createTempImageUri(context)
+                        tempCameraUri = uri
+                        cameraLauncher.launch(uri)
+                    },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Select Photo")
+                    Icon(Icons.Default.PhotoCamera, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Capture")
                 }
-                Button(
-                    onClick = { pdfLauncher.launch("application/pdf") },
+                OutlinedButton(
+                    onClick = { galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Select PDF")
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Gallery")
+                }
+                OutlinedButton(
+                    onClick = { fileLauncher.launch("*/*") },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Description, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Files")
                 }
             }
             
             Button(
                 onClick = {
-                    viewModel.addClaim(DenialClaim(
+                    val claim = DenialClaim(
                         providerName = providerName,
                         claimId = claimId,
                         denialReasonCode = denialReasonCode,
-                        denialReasonDescription = denialReasonDescription
-                    )) { id ->
+                        denialReasonDescription = denialReasonDescription,
+                        status = if (selectedUris.isEmpty()) "PENDING" else "PROCESSING"
+                    )
+                    viewModel.addClaim(claim) { id ->
+                        if (selectedUris.isNotEmpty()) {
+                            viewModel.processDocuments(id, selectedUris)
+                        }
                         onNavigateToDetail(id)
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Save and Continue Manually")
+                Text(if (selectedUris.isEmpty()) "Save Claim" else "Analyze and Generate Rebuttal")
             }
         }
     }
+}
+
+private fun createTempImageUri(context: Context): Uri {
+    val tempFile = File(context.cacheDir, "camera_${UUID.randomUUID()}.jpg")
+    return androidx.core.content.FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        tempFile
+    )
 }

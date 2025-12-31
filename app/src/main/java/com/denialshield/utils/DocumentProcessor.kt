@@ -49,15 +49,18 @@ class DocumentProcessor(private val context: Context) {
     }
 
     fun extractPolicyLanguage(rawText: String): String {
-        // Simple heuristic for now: look for "policy", "coverage", "exclusion", "section"
-        // This can be improved with regex or basic NLP
-        val lines = rawText.lines()
-        val relevantLines = lines.filter { line ->
-            line.contains("policy", ignoreCase = true) ||
-            line.contains("coverage", ignoreCase = true) ||
-            line.contains("exclusion", ignoreCase = true) ||
-            line.contains("benefit", ignoreCase = true)
+        // Simple heuristic: look for sentences containing specific keywords
+        val keywords = listOf(
+            "policy", "coverage", "exclusion", "section", "benefit", 
+            "medical necessity", "not covered", "experimental", "investigational",
+            "clinical criteria", "prior authorization", "appeal"
+        )
+        
+        val sentences = rawText.split(Regex("(?<=[.!?])\\s+"))
+        val relevantSentences = sentences.filter { sentence ->
+            keywords.any { keyword -> sentence.contains(keyword, ignoreCase = true) }
         }
-        return relevantLines.joinToString("\n")
+        
+        return relevantSentences.distinct().joinToString("\n\n")
     }
 }

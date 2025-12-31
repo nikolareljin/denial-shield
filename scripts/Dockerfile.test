@@ -1,0 +1,10 @@
+# Test stage
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Install necessary tools
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# The command will run the tests
+CMD ["./gradlew", "test"]

@@ -53,24 +53,19 @@ class MainViewModel(
         }
     }
 
-    fun processDocument(claimId: Long, uri: Uri, isPdf: Boolean) {
+    fun processDocuments(claimId: Long, uris: List<Uri>) {
         viewModelScope.launch {
             _isProcessing.value = true
-            val text = if (isPdf) {
-                documentProcessor.processPdf(uri)
-            } else {
-                documentProcessor.processImage(uri)
-            }
+            val aggregatedText = StringBuilder()
             
-            val claim = repository.getClaimById(claimId)
-            if (claim != null) {
-                val policyLanguage = documentProcessor.extractPolicyLanguage(text)
-                val updatedClaim = claim.copy(
-                    rawOcrText = text,
-                    policyLanguageCited = policyLanguage,
-                    status = "EVIDENCE"
-                )
-                repository.updateClaim(updatedClaim)
+            uris.forEach { uri ->
+                val isPdf = uri.toString().contains("pdf")
+                val text = if (isPdf) {
+                    documentProcessor.processPdf(uri)
+                } else {
+                    documentProcessor.processImage(uri)
+                }
+                aggregatedText.append(text).append("\n\n")
                 
                 repository.addEvidence(Evidence(
                     claimId = claimId,
@@ -78,6 +73,21 @@ class MainViewModel(
                     fileName = uri.lastPathSegment ?: "document",
                     mimeType = if (isPdf) "application/pdf" else "image/*"
                 ))
+            }
+            
+            val claim = repository.getClaimById(claimId)
+            if (claim != null) {
+                val fullText = aggregatedText.toString()
+                val policyLanguage = documentProcessor.extractPolicyLanguage(fullText)
+                val updatedClaim = claim.copy(
+                    rawOcrText = fullText,
+                    policyLanguageCited = policyLanguage,
+                    status = "EVIDENCE"
+                )
+                repository.updateClaim(updatedClaim)
+                
+                // Automatically trigger AI generation once evidence is gathered
+                generateRebuttal(claimId)
             }
             _isProcessing.value = false
         }

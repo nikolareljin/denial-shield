@@ -68,8 +68,8 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
     
-    // ML Kit Text Recognition
-    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
+    // ML Kit Text Recognition (Unbundled)
+    implementation("com.google.mlkit:text-recognition:16.0.0")
     
     // PDF Handling
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
