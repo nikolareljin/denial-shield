@@ -104,7 +104,7 @@ fun ClaimDetailScreen(
                 InfoSection("Reason", "${claim.denialReasonDescription} (${claim.denialReasonCode})")
                 InfoSection("Status", claim.status)
 
-                HorizontalDivider()
+                Divider()
 
                 Text(
                     "Extracted Policy Language",
@@ -117,7 +117,7 @@ fun ClaimDetailScreen(
                     Text(claim.policyLanguageCited, style = MaterialTheme.typography.bodyMedium)
                 }
 
-                HorizontalDivider()
+                Divider()
 
                 if (isProcessing) {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = androidx.compose.ui.Alignment.Center) {

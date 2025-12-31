@@ -70,9 +70,17 @@ dependencies {
     
     // ML Kit Text Recognition (Unbundled)
     implementation("com.google.mlkit:text-recognition:16.0.0")
+    // Coroutines support for ML Kit Tasks
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     
     // PDF Handling
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+
+    // Image Loading
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // Icons
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Local AI (MediaPipe GenAI)
     implementation("com.google.mediapipe:tasks-genai:0.10.11")

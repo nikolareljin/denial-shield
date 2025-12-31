@@ -109,7 +109,7 @@ fun ClaimIntakeScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            HorizontalDivider()
+            Divider()
             
             Text(
                 "Step 2: Denial Details",
@@ -132,7 +132,7 @@ fun ClaimIntakeScreen(
                 minLines = 3
             )
             
-            HorizontalDivider()
+            Divider()
             
             Text(
                 "Step 3: Documents (Evidence)",

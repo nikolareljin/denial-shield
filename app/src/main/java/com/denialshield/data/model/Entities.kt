@@ -13,7 +13,8 @@ data class UserInfo(
     val state: String = "",
     val zipCode: String = "",
     val insuranceName: String = "",
-    val policyNumber: String = ""
+    val policyNumber: String = "",
+    val insuranceMemberId: String = ""
 )
 
 @Entity(tableName = "denial_claims")

@@ -9,6 +9,7 @@ import com.denialshield.data.model.Evidence
 import com.denialshield.data.model.UserInfo
 import com.denialshield.data.repository.DenialRepository
 import com.denialshield.utils.DocumentProcessor
+import com.denialshield.utils.AiRebuttalGenerator
 import com.denialshield.utils.RebuttalGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
