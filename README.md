@@ -10,6 +10,27 @@ DenialShield is an Android application designed to help patients and caregivers 
 - **Privacy First**: All data is processed and stored locally on your device.
 - **Export Options**: Share generated rebuttals via email, PDF, or secure messaging.
 
+## Usage
+
+- Open the app
+
+<img width="1080" height="2220" alt="Screenshot_20251231_185021" src="https://github.com/user-attachments/assets/e8ad1841-b702-458d-ae2e-0841b5b9c242" />
+
+- Enter insurance information and personal details
+
+<img width="1080" height="2220" alt="Screenshot_20251231_185603" src="https://github.com/user-attachments/assets/8e97ee36-f890-4769-8feb-ea08c31cbb5f" />
+
+- Enter the denied claim
+
+<img width="1080" height="2220" alt="Screenshot_20251231_185603" src="https://github.com/user-attachments/assets/e9446fe3-0f59-434e-bb5d-934def8e385a" />
+
+- Enter basic information about the claim, take the photo or upload the document
+
+<img width="1080" height="2220" alt="Screenshot_20251231_185603" src="https://github.com/user-attachments/assets/57c3cf4c-fbab-4640-9f9c-3ee41dc05065" />
+
+
+
+
 ## Tech Stack
 
 - **Jetpack Compose**: Modern UI implementation.
