@@ -2,6 +2,10 @@
 
 This guide explains how to set up the environment for `denial-shield` development.
 
+## Disclaimer
+
+DenialShield does not provide legal, medical, or other advice to any patient or insurer. The app exists only to demonstrate on-device AI workflows and should not be used in real-world scenarios. Use at your own risk; the authors accept no responsibility or liability for any use of this software.
+
 ## Prerequisites
 
 - Java 17 JDK

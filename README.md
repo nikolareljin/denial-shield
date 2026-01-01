@@ -2,6 +2,10 @@
 
 DenialShield is an Android application designed to help patients and caregivers generate clear, structured, and legally sound responses to medical claim denials. 
 
+## Disclaimer
+
+DenialShield does not provide legal, medical, or other advice to any patient or insurer. The app exists only to demonstrate on-device AI workflows and should not be used in real-world scenarios. Use at your own risk; the authors accept no responsibility or liability for any use of this software.
+
 ## Features
 
 - **Step-by-step Denial Intake**: A guided workflow to capture claim and provider details.
