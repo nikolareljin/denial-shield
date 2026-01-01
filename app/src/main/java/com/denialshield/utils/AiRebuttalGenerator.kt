@@ -12,6 +12,7 @@ import java.io.FileOutputStream
 class AiRebuttalGenerator(private val context: Context) {
 
     private var llmInference: LlmInference? = null
+    private var llmUnavailable: Boolean = false
 
     companion object {
         const val MODEL_VERSION = 1
@@ -42,17 +43,21 @@ class AiRebuttalGenerator(private val context: Context) {
 
     private suspend fun setupLlm() {
         syncModelIfNeeded()
-        if (llmInference == null && File(modelPath).exists()) {
+        if (llmUnavailable || llmInference != null || !File(modelPath).exists()) {
+            return
+        }
+        try {
             val options = LlmInference.LlmInferenceOptions.builder()
                 .setModelPath(modelPath)
                 .setMaxTokens(1024)
-                .setTopK(40)
-                .setTemperature(0.7f)
-                .setRandomSeed(101)
                 .build()
             llmInference = withContext(Dispatchers.IO) {
                 LlmInference.createFromOptions(context, options)
             }
+        } catch (e: UnsatisfiedLinkError) {
+            llmUnavailable = true
+        } catch (e: Exception) {
+            llmUnavailable = true
         }
     }
 
@@ -61,7 +66,7 @@ class AiRebuttalGenerator(private val context: Context) {
         claim: DenialClaim
     ): String = withContext(Dispatchers.IO) {
         setupLlm()
-        
+
         val prompt = """
             You are a medical billing expert helping a patient appeal a claim denial.
             
@@ -99,9 +104,13 @@ class AiRebuttalGenerator(private val context: Context) {
             }
         } else {
             // If model is not found, use a sophisticated template (Fallback AI)
-            val modelStatus = if (!File(modelPath).exists()) "Model file not found." else "Model initialization failed."
+            val modelStatus = when {
+                !File(modelPath).exists() -> "Model file not found."
+                llmUnavailable -> "Native AI library unavailable."
+                else -> "Model initialization failed."
+            }
             "Note: On-device AI ($modelStatus) is unavailable. Using template engine.\n\n" +
-            fallbackGenerator(userInfo, claim)
+                    fallbackGenerator(userInfo, claim)
         }
     }
 

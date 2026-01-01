@@ -19,6 +19,11 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // This block is the definitive fix for the UnsatisfiedLinkError
+        ndk {
+            abiFilters.addAll(listOf("x86_64", "armeabi-v7a", "arm64-v8a"))
+        }
     }
 
     buildTypes {
@@ -59,21 +64,21 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    
+
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    
+
     // Room
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
-    
+
     // ML Kit Text Recognition (Unbundled)
     implementation("com.google.mlkit:text-recognition:16.0.0")
     // Coroutines support for ML Kit Tasks
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-    
+
     // PDF Handling
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 
