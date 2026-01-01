@@ -22,7 +22,7 @@ DenialShield is an Android application designed to help patients and caregivers 
 
 - Enter the denied claim
 
-<img width="1080" height="2220" alt="Screenshot_20251231_185603" src="https://github.com/user-attachments/assets/e9446fe3-0f59-434e-bb5d-934def8e385a" />
+<img width="1080" height="2220" alt="Screenshot_20251231_185752" src="https://github.com/user-attachments/assets/fbab7883-01b1-4f5d-89a0-32eea859ef4a" />
 
 - Enter basic information about the claim, take the photo or upload the document
 
