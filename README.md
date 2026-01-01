@@ -16,6 +16,10 @@ DenialShield does not provide legal, medical, or other advice to any patient or 
 
 ## Usage
 
+- Initial disclaimer:
+
+<img width="1080" height="2220" alt="Screenshot_20251231_233752" src="https://github.com/user-attachments/assets/ee712b09-4c14-4ee4-bb7d-a96ecbc254d6" />
+
 - Open the app
 
 <img width="1080" height="2220" alt="Screenshot_20251231_185021" src="https://github.com/user-attachments/assets/e8ad1841-b702-458d-ae2e-0841b5b9c242" />
@@ -41,8 +45,11 @@ DenialShield does not provide legal, medical, or other advice to any patient or 
 
 - Generating response
 
+<img width="1080" height="2220" alt="Screenshot_20260101_001854" src="https://github.com/user-attachments/assets/302b2132-f378-46b7-bc5c-472abdd65be6" />
+
 - Submit the rebuttal
 
+It's a copy/paste and manual submission..
 
 ## Tech Stack
 
