@@ -28,7 +28,13 @@ DenialShield is an Android application designed to help patients and caregivers 
 
 <img width="1080" height="2220" alt="Screenshot_20251231_185833" src="https://github.com/user-attachments/assets/f2a2dd20-1c09-405a-99fd-3714a865a33f" />
 
+<img width="1080" height="2220" alt="Screenshot_20251231_190402" src="https://github.com/user-attachments/assets/662cb07f-4d14-450a-920e-9996f7a7e960" />
 
+- Processing denial documents
+
+- Generating response
+
+- Submit the rebuttal
 
 
 ## Tech Stack
