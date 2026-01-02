@@ -14,5 +14,9 @@ permissions:
 
 jobs:
   trivy-scan:
-    uses: nikolareljin/ci-helpers/.github/workflows/trivy-scan.yml@production
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Trivy scan
+        uses: nikolareljin/ci-helpers/.github/actions/trivy-scan@production

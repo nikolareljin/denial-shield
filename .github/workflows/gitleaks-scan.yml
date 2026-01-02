@@ -14,5 +14,9 @@ permissions:
 
 jobs:
   gitleaks-scan:
-    uses: nikolareljin/ci-helpers/.github/workflows/gitleaks-scan.yml@production
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Gitleaks scan
+        uses: nikolareljin/ci-helpers/.github/actions/gitleaks-scan@production
