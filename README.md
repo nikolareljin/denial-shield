@@ -65,7 +65,7 @@ It's a copy/paste and manual submission..
 1. Clone this repository.
 2. Open the project in **Android Studio (Ladybug or newer recommended)**.
 3. Sync Project with Gradle Files.
-4. **AI Generation**: For local AI to work, place a compatible `.bin` model (e.g., Gemma 2B) in the app's internal files directory. The app provides a fallback template generator if the model is missing.
+4. **AI Generation**: On first run, the app downloads a public LiteRT `.task` model (SmolLM-135M-Instruct) and stores it as `model.bin` under `Android/data/com.denialshield/files/models/`. The app provides a fallback template generator if the model is missing or the native runtime is unavailable.
 
 ## Installation
 
@@ -77,7 +77,7 @@ To install DenialShield on your Android phone:
    - **Via ADB**: `adb install app/build/outputs/apk/debug/app-debug.apk`
    - **Manual Transfer**: Transfer the `.apk` file to your phone and open it with a file manager. You may need to enable "Install from Unknown Sources".
 
-For detailed instructions, see the [Usage Guide](docs/usage.md).
+For detailed instructions, see the [Usage Guide](docs/usage.md) and the [Release Guide](docs/release.md).
 
 
 ## Privacy Note

@@ -3,6 +3,7 @@ package com.denialshield.utils
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.denialshield.BuildConfig
 import com.denialshield.data.model.DenialClaim
 import com.denialshield.data.model.UserInfo
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
@@ -22,10 +23,11 @@ class AiRebuttalGenerator(private val context: Context) {
 
     companion object {
         private const val TAG = "AiRebuttalGenerator"
-        const val MODEL_VERSION = 1
+        const val MODEL_VERSION = 2
         const val MODEL_NAME = "model.bin"
         const val MODEL_DOWNLOAD_URL =
-            "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.task?download=true"
+            "https://huggingface.co/litert-community/SmolLM-135M-Instruct/resolve/main/" +
+                "SmolLM-135M-Instruct_multi-prefill-seq_q8_ekv1280.task?download=true"
         const val PREFS_NAME = "ai_prefs"
         const val KEY_MODEL_VERSION = "model_version"
     }
@@ -54,7 +56,7 @@ class AiRebuttalGenerator(private val context: Context) {
                     Log.i(TAG, "Model synced to ${modelFile.absolutePath} (${modelFile.length()} bytes).")
                 }
             } catch (e: Exception) {
-                onStatus("Model download failed. Please check network and retry.")
+                onStatus("Model download failed. Please check network or HF token.")
                 Log.e(TAG, "Failed to download model to ${modelFile.absolutePath}", e)
             }
         } else {
@@ -67,18 +69,37 @@ class AiRebuttalGenerator(private val context: Context) {
         return Build.SUPPORTED_ABIS.any { it in supported }
     }
 
+    private fun hasNativeRuntime(): Boolean {
+        val libDir = context.applicationInfo.nativeLibraryDir ?: return false
+        val libFile = File(libDir, "libllm_inference_engine_jni.so")
+        return libFile.exists()
+    }
+
     private fun downloadModel() {
+        if (!modelDir.exists() && !modelDir.mkdirs()) {
+            throw IllegalStateException("Unable to create model directory at ${modelDir.absolutePath}")
+        }
+
         val tmpFile = File(modelDir, "${MODEL_NAME}.download")
+        if (tmpFile.exists()) {
+            tmpFile.delete()
+        }
         val connection = URL(MODEL_DOWNLOAD_URL).openConnection() as HttpsURLConnection
         connection.instanceFollowRedirects = true
         connection.connectTimeout = 30_000
         connection.readTimeout = 30_000
         connection.setRequestProperty("User-Agent", "DenialShield/1.0")
         connection.setRequestProperty("Accept", "*/*")
+        if (BuildConfig.HF_TOKEN.isNotBlank()) {
+            connection.setRequestProperty("Authorization", "Bearer ${BuildConfig.HF_TOKEN}")
+        }
 
         connection.connect()
         val responseCode = connection.responseCode
         if (responseCode !in 200..299) {
+            if (responseCode == 401) {
+                throw IllegalStateException("Model download unauthorized (HTTP 401). Add HF_TOKEN.")
+            }
             throw IllegalStateException("Model download failed with HTTP $responseCode")
         }
 
@@ -89,9 +110,17 @@ class AiRebuttalGenerator(private val context: Context) {
                 }
             }
         }
+        if (tmpFile.length() == 0L) {
+            tmpFile.delete()
+            throw IllegalStateException("Downloaded model is empty.")
+        }
+
         if (!tmpFile.renameTo(modelFile)) {
             tmpFile.copyTo(modelFile, overwrite = true)
             tmpFile.delete()
+            Log.w(TAG, "Atomic rename failed; copied model to ${modelFile.absolutePath}")
+        } else {
+            Log.i(TAG, "Model download complete at ${modelFile.absolutePath}")
         }
     }
 
@@ -100,6 +129,13 @@ class AiRebuttalGenerator(private val context: Context) {
             llmNativeLibraryMissing = true
             llmUnavailable = true
             Log.w(TAG, "Unsupported ABI for GenAI runtime: ${Build.SUPPORTED_ABIS.joinToString()}")
+            return
+        }
+        if (!hasNativeRuntime()) {
+            llmNativeLibraryMissing = true
+            llmUnavailable = true
+            onStatus("AI runtime not available on this device.")
+            Log.w(TAG, "Native GenAI runtime library missing in ${context.applicationInfo.nativeLibraryDir}")
             return
         }
         onStatus("Loading AI model...")

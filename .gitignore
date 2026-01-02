@@ -20,6 +20,7 @@ local.properties
 # Keystores
 *.jks
 *.keystore
+keystore/keystore.properties
 
 # Google Services
 google-services.json

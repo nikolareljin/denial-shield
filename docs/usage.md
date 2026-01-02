@@ -34,4 +34,8 @@ DenialShield does not provide legal, medical, or other advice to any patient or 
 
 ## AI Model Setup
 
-For the local AI features to work, ensure you have placed the `model.bin` file in `app/src/main/assets/`. If the AI model is not present, the app will gracefully fallback to a sophisticated template-based generator.
+On first run, the app downloads a public LiteRT `.task` model (SmolLM-135M-Instruct) and stores it as `model.bin` under `Android/data/com.denialshield/files/models/`. This requires internet access and an ARM64 device/emulator to run the native GenAI runtime. If the model is missing or the runtime is unavailable, the app falls back to the template-based generator.
+
+Manual override (optional): You can preinstall a model by copying it to `Android/data/com.denialshield/files/models/model.bin` on the device before launching the app.
+
+For release and Play signing details, see the [Release Guide](release.md).

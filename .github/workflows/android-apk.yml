@@ -1,0 +1,29 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    uses: nikolareljin/ci-helpers/.github/workflows/release-build.yml@production
+    secrets: inherit
+    with:
+      java_version: "17"
+      build_command: |
+        if [ -n "$KEYSTORE_B64" ]; then
+          mkdir -p keystore
+          echo "$KEYSTORE_B64" | base64 -d > keystore/denialshield-release.jks
+          export KEYSTORE_PATH=keystore/denialshield-release.jks
+          export KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD:-}"
+          export KEY_ALIAS="${KEY_ALIAS:-}"
+          export KEY_PASSWORD="${KEY_PASSWORD:-}"
+          echo "Signing enabled (keystore provided)."
+        else
+          echo "Signing skipped (no KEYSTORE_B64 secret)."
+        fi
+        ./gradlew assembleRelease
+      artifact_paths: "app/build/outputs/apk/release/app-release.apk"
+      upload_artifact: true
+      artifact_name: "denial-shield-release-apk"

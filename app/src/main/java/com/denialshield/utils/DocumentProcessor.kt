@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -12,8 +13,10 @@ import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class DocumentProcessor(private val context: Context) {
 
@@ -118,5 +121,11 @@ class DocumentProcessor(private val context: Context) {
         return resolver.openInputStream(uri)?.use { inputStream ->
             BitmapFactory.decodeStream(inputStream, null, decodeOptions)
         }
+    }
+
+    private suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { cont ->
+        addOnSuccessListener { cont.resume(it) }
+        addOnFailureListener { cont.resumeWithException(it) }
+        addOnCanceledListener { cont.cancel() }
     }
 }

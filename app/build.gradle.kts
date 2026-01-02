@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,6 +9,34 @@ plugins {
 android {
     namespace = "com.denialshield"
     compileSdk = 34
+
+    signingConfigs {
+        create("release") {
+            val keystorePropsFile = rootProject.file("keystore/keystore.properties")
+            val keystoreProps = Properties()
+            if (keystorePropsFile.exists()) {
+                keystorePropsFile.inputStream().use { keystoreProps.load(it) }
+            }
+
+            fun resolveProp(name: String): String {
+                return listOf(
+                    providers.gradleProperty(name).orNull,
+                    System.getenv(name),
+                    keystoreProps.getProperty(name)
+                ).firstOrNull { !it.isNullOrBlank() }.orEmpty()
+            }
+
+            val keystorePath = resolveProp("KEYSTORE_PATH")
+            val keystorePassword = resolveProp("KEYSTORE_PASSWORD")
+            val keyAlias = resolveProp("KEY_ALIAS")
+            val keyPassword = resolveProp("KEY_PASSWORD")
+
+            storeFile = if (keystorePath.isNotBlank()) file(keystorePath) else null
+            storePassword = keystorePassword.ifBlank { null }
+            this.keyAlias = keyAlias.ifBlank { null }
+            this.keyPassword = keyPassword.ifBlank { null }
+        }
+    }
 
     defaultConfig {
         applicationId = "com.denialshield"
@@ -20,7 +50,9 @@ android {
             useSupportLibrary = true
         }
 
-        // This block is the definitive fix for the UnsatisfiedLinkError
+        val hfToken = providers.gradleProperty("HF_TOKEN").orNull ?: ""
+        buildConfigField("String", "HF_TOKEN", "\"$hfToken\"")
+        
         ndk {
             abiFilters.addAll(listOf("x86_64", "armeabi-v7a", "arm64-v8a"))
         }
@@ -29,6 +61,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -44,6 +77,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -51,11 +85,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // Keep oversized model artifacts out of the APK to avoid Zip32 limits.
-            excludes += "assets/gemma_tflite/**"
-            excludes += "assets/gemma_tflite.tar.gz"
-            // Prevent the huge on-device model from inflating the APK.
-            excludes += "assets/model.bin"
         }
     }
 }
@@ -69,21 +98,19 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-
+    
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
-
+    
     // Room
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
-
-    // ML Kit Text Recognition (Unbundled)
-    implementation("com.google.mlkit:text-recognition:16.0.0")
-    // Coroutines support for ML Kit Tasks
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-
+    
+    // ML Kit Text Recognition (Bundled)
+    implementation("com.google.mlkit:text-recognition:16.0.0-beta6")
+    
     // PDF Handling
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 
