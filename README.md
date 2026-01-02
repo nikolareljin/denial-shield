@@ -79,6 +79,15 @@ To install DenialShield on your Android phone:
 
 For detailed instructions, see the [Usage Guide](docs/usage.md) and the [Release Guide](docs/release.md).
 
+## CI APK Artifact
+
+Each push to `main` produces a signed (if secrets are set) or unsigned release APK and publishes it as the `latest` release asset:
+
+https://github.com/nikolareljin/denial-shield/releases/download/latest/denial-shield-latest.apk
+
+CI runs remain available here:
+https://github.com/nikolareljin/denial-shield/actions/workflows/android-apk.yml
+
 
 ## Privacy Note
 

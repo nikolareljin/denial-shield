@@ -28,6 +28,11 @@ jobs:
           echo "Signing skipped (no KEYSTORE_B64 secret)."
         fi
         ./gradlew assembleRelease
-      artifact_paths: "app/build/outputs/apk/release/app-release.apk"
+        mkdir -p dist
+        cp app/build/outputs/apk/release/app-release.apk dist/denial-shield-latest.apk
+      artifact_paths: "dist/denial-shield-latest.apk"
       upload_artifact: true
       artifact_name: "denial-shield-release-apk"
+      release_tag: "latest"
+      release_name: "Latest"
+      generate_release_notes: false
