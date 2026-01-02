@@ -35,6 +35,9 @@ class MainViewModel(
     private val _isProcessing = MutableStateFlow(false)
     val isProcessing = _isProcessing.asStateFlow()
 
+    private val _statusMessage = MutableStateFlow<String?>(null)
+    val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
+
     fun saveUserInfo(userInfo: UserInfo) {
         viewModelScope.launch {
             repository.saveUserInfo(userInfo)
@@ -97,16 +100,20 @@ class MainViewModel(
     fun generateRebuttal(claimId: Long) {
         viewModelScope.launch {
             _isProcessing.value = true
+            _statusMessage.value = "Starting AI rebuttal..."
             val claim = repository.getClaimById(claimId)
             val user = userInfo.value
             if (claim != null && user != null) {
-                val rebuttal = aiGenerator.generateRebuttal(user, claim)
+                val rebuttal = aiGenerator.generateRebuttal(user, claim) { status ->
+                    _statusMessage.value = status
+                }
                 repository.updateClaim(claim.copy(
                     generatedRebuttal = rebuttal,
                     status = "GENERATED"
                 ))
             }
             _isProcessing.value = false
+            _statusMessage.value = null
         }
     }
 }

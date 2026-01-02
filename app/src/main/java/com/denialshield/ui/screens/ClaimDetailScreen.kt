@@ -31,6 +31,7 @@ fun ClaimDetailScreen(
     val claims by viewModel.allClaims.collectAsState()
     val claim = claims.find { it.id == claimId }
     val isProcessing by viewModel.isProcessing.collectAsState()
+    val statusMessage by viewModel.statusMessage.collectAsState()
     val userInfo by viewModel.userInfo.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -124,7 +125,10 @@ fun ClaimDetailScreen(
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = androidx.compose.ui.Alignment.Center) {
                         Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
                             CircularProgressIndicator()
-                            Text("AI is generating your rebuttal...", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                statusMessage ?: "AI is generating your rebuttal...",
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     }
                 } else {

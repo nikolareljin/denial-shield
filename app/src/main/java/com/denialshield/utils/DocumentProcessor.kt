@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -13,9 +14,12 @@ import com.tom_roush.pdfbox.text.PDFTextStripper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import java.io.InputStream
 
 class DocumentProcessor(private val context: Context) {
+
+    companion object {
+        private const val TAG = "DocumentProcessor"
+    }
 
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
@@ -25,30 +29,48 @@ class DocumentProcessor(private val context: Context) {
 
     suspend fun processImage(uri: Uri): String = withContext(Dispatchers.IO) {
         try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            val image = InputImage.fromBitmap(bitmap, 0)
+            val image = try {
+                InputImage.fromFilePath(context, uri)
+            } catch (e: Exception) {
+                Log.w(TAG, "InputImage.fromFilePath failed for $uri; falling back to bitmap decode.", e)
+                val bitmap = decodeBitmapFromUri(uri)
+                    ?: return@withContext ""
+                InputImage.fromBitmap(bitmap, 0)
+            }
             val result = recognizer.process(image).await()
-            result.text
+            if (result.text.isBlank()) {
+                Log.w(TAG, "OCR returned empty text for $uri")
+            }
+            result.text.trim()
         } catch (e: Exception) {
-            "Error processing image: ${e.message}"
+            Log.e(TAG, "Error processing image: $uri", e)
+            ""
         }
     }
 
     suspend fun processPdf(uri: Uri): String = withContext(Dispatchers.IO) {
         try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-            val document = PDDocument.load(inputStream)
-            val stripper = PDFTextStripper()
-            val text = stripper.getText(document)
-            document.close()
-            text
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                PDDocument.load(inputStream).use { document ->
+                    val stripper = PDFTextStripper()
+                    stripper.getText(document)
+                }?.trim().orEmpty()
+            } ?: run {
+                Log.e(TAG, "Error processing PDF: unable to open file for $uri")
+                ""
+            }
         } catch (e: Exception) {
-            "Error processing PDF: ${e.message}"
+            Log.e(TAG, "Error processing PDF: $uri", e)
+            ""
         }
     }
 
     fun extractPolicyLanguage(rawText: String): String {
+        val cleanedText = rawText.trim()
+        if (cleanedText.isEmpty()) {
+            return ""
+        }
+
         // Simple heuristic: look for sentences containing specific keywords
         val keywords = listOf(
             "policy", "coverage", "exclusion", "section", "benefit", 
@@ -56,11 +78,45 @@ class DocumentProcessor(private val context: Context) {
             "clinical criteria", "prior authorization", "appeal"
         )
         
-        val sentences = rawText.split(Regex("(?<=[.!?])\\s+"))
+        val sentences = cleanedText.split(Regex("(?<=[.!?])\\s+"))
         val relevantSentences = sentences.filter { sentence ->
             keywords.any { keyword -> sentence.contains(keyword, ignoreCase = true) }
         }
         
-        return relevantSentences.distinct().joinToString("\n\n")
+        return if (relevantSentences.isEmpty()) {
+            cleanedText
+        } else {
+            relevantSentences.distinct().joinToString("\n\n")
+        }
+    }
+
+    private fun decodeBitmapFromUri(uri: Uri, maxDimension: Int = 4096): Bitmap? {
+        val resolver = context.contentResolver
+        val boundsOptions = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+        }
+
+        resolver.openInputStream(uri)?.use { inputStream ->
+            BitmapFactory.decodeStream(inputStream, null, boundsOptions)
+        } ?: return null
+
+        val maxSide = maxOf(boundsOptions.outWidth, boundsOptions.outHeight)
+        val sampleSize = if (maxSide > maxDimension) {
+            var size = 1
+            while (maxSide / size > maxDimension) {
+                size *= 2
+            }
+            size
+        } else {
+            1
+        }
+
+        val decodeOptions = BitmapFactory.Options().apply {
+            inSampleSize = sampleSize
+        }
+
+        return resolver.openInputStream(uri)?.use { inputStream ->
+            BitmapFactory.decodeStream(inputStream, null, decodeOptions)
+        }
     }
 }

@@ -51,6 +51,11 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Keep oversized model artifacts out of the APK to avoid Zip32 limits.
+            excludes += "assets/gemma_tflite/**"
+            excludes += "assets/gemma_tflite.tar.gz"
+            // Prevent the huge on-device model from inflating the APK.
+            excludes += "assets/model.bin"
         }
     }
 }
