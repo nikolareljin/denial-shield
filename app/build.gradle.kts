@@ -10,28 +10,30 @@ android {
     namespace = "com.denialshield"
     compileSdk = 34
 
+    val keystorePropsFile = rootProject.file("keystore/keystore.properties")
+    val keystoreProps = Properties()
+    if (keystorePropsFile.exists()) {
+        keystorePropsFile.inputStream().use { keystoreProps.load(it) }
+    }
+
+    fun resolveProp(name: String): String {
+        return listOf(
+            providers.gradleProperty(name).orNull,
+            System.getenv(name),
+            keystoreProps.getProperty(name)
+        ).firstOrNull { !it.isNullOrBlank() }.orEmpty()
+    }
+
+    val releaseKeystorePath = resolveProp("KEYSTORE_PATH")
+    val hasReleaseKeystore = releaseKeystorePath.isNotBlank()
+
     signingConfigs {
         create("release") {
-            val keystorePropsFile = rootProject.file("keystore/keystore.properties")
-            val keystoreProps = Properties()
-            if (keystorePropsFile.exists()) {
-                keystorePropsFile.inputStream().use { keystoreProps.load(it) }
-            }
-
-            fun resolveProp(name: String): String {
-                return listOf(
-                    providers.gradleProperty(name).orNull,
-                    System.getenv(name),
-                    keystoreProps.getProperty(name)
-                ).firstOrNull { !it.isNullOrBlank() }.orEmpty()
-            }
-
-            val keystorePath = resolveProp("KEYSTORE_PATH")
             val keystorePassword = resolveProp("KEYSTORE_PASSWORD")
             val keyAlias = resolveProp("KEY_ALIAS")
             val keyPassword = resolveProp("KEY_PASSWORD")
 
-            storeFile = if (keystorePath.isNotBlank()) file(keystorePath) else null
+            storeFile = if (releaseKeystorePath.isNotBlank()) file(releaseKeystorePath) else null
             storePassword = keystorePassword.ifBlank { null }
             this.keyAlias = keyAlias.ifBlank { null }
             this.keyPassword = keyPassword.ifBlank { null }
@@ -61,7 +63,11 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
