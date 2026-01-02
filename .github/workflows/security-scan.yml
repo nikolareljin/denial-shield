@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   trivy-scan:
@@ -20,3 +21,5 @@ jobs:
         uses: actions/checkout@v4
       - name: Trivy scan
         uses: nikolareljin/ci-helpers/.github/actions/trivy-scan@production
+        with:
+          upload_sarif: ${{ github.event.pull_request.head.repo.fork != true }}
