@@ -15,9 +15,10 @@ jobs:
     with:
       java_version: "17"
       build_command: |
-        if [ -n "$KEYSTORE_B64" ]; then
+        KEYSTORE_B64_VALUE="${KEYSTORE_B64:-}"
+        if [ -n "$KEYSTORE_B64_VALUE" ]; then
           mkdir -p keystore
-          echo "$KEYSTORE_B64" | base64 -d > keystore/denialshield-release.jks
+          echo "$KEYSTORE_B64_VALUE" | base64 -d > keystore/denialshield-release.jks
           export KEYSTORE_PATH=keystore/denialshield-release.jks
           export KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD:-}"
           export KEY_ALIAS="${KEY_ALIAS:-}"
