@@ -36,3 +36,6 @@ google-services.json
 # System
 Thumbs.db
 desktop.ini
+
+# Models
+app/src/main/assets/*.bin
