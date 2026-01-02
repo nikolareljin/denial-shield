@@ -1,0 +1,18 @@
+name: Gitleaks Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches:
+      - main
+      - "release/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks-scan:
+    uses: nikolareljin/ci-helpers/.github/workflows/gitleaks-scan.yml@production
+    secrets: inherit

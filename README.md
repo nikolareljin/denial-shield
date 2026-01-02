@@ -1,5 +1,9 @@
 # DenialShield: Automated Medical Denial Rebuttal Assistant
 
+[![Build APK](https://github.com/nikolareljin/denial-shield/actions/workflows/android-apk.yml/badge.svg)](https://github.com/nikolareljin/denial-shield/actions/workflows/android-apk.yml)
+[![Security Scan](https://github.com/nikolareljin/denial-shield/actions/workflows/security-scan.yml/badge.svg)](https://github.com/nikolareljin/denial-shield/actions/workflows/security-scan.yml)
+[![Gitleaks Scan](https://github.com/nikolareljin/denial-shield/actions/workflows/gitleaks-scan.yml/badge.svg)](https://github.com/nikolareljin/denial-shield/actions/workflows/gitleaks-scan.yml)
+
 DenialShield is an Android application designed to help patients and caregivers generate clear, structured, and legally sound responses to medical claim denials. 
 
 ## Disclaimer
