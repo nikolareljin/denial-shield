@@ -89,9 +89,6 @@ Each push to `main` produces a signed (if secrets are set) or unsigned release A
 
 https://github.com/nikolareljin/denial-shield/releases/download/latest/denial-shield-latest.apk
 
-CI runs remain available here:
-https://github.com/nikolareljin/denial-shield/actions/workflows/android-apk.yml
-
 
 ## Privacy Note
 
