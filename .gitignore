@@ -40,3 +40,5 @@ desktop.ini
 
 # Models
 app/src/main/assets/*.bin
+
+/ignore/
