@@ -12,6 +12,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SUBMODULE_PATH="scripts/script-helpers"
 
 INCLUDE_PATH=""
 for candidate in "$SCRIPT_DIR/include.sh" "$SCRIPT_DIR/scripts/include.sh"; do
@@ -51,7 +52,10 @@ cd "$PROJECT_ROOT"
 load_env
 
 print_info "Updating git submodules..."
+git submodule sync --recursive
 git submodule update --init --recursive
+git submodule set-branch --branch production "$SUBMODULE_PATH"
+git submodule update --init --recursive --remote "$SUBMODULE_PATH"
 
 if [[ ! -x "./gradlew" ]]; then
   print_warning "gradlew not found. Attempting to initialize with gradle wrapper..."
