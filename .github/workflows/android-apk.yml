@@ -10,7 +10,9 @@ permissions:
 
 jobs:
   build-apk:
-    uses: nikolareljin/ci-helpers/.github/workflows/release-build.yml@production
+    # yamllint disable rule:line-length
+    uses: nikolareljin/ci-helpers/.github/workflows/release-build.yml@b5c8ac82ce3ce84f30ca3aa389c9075075dcab6a
+    # yamllint enable rule:line-length
     secrets: inherit
     with:
       java_version: "17"
@@ -18,7 +20,8 @@ jobs:
         KEYSTORE_B64_VALUE="${KEYSTORE_B64:-}"
         if [ -n "$KEYSTORE_B64_VALUE" ]; then
           mkdir -p keystore
-          echo "$KEYSTORE_B64_VALUE" | base64 -d > keystore/denialshield-release.jks
+          echo "$KEYSTORE_B64_VALUE" | \
+            base64 -d > keystore/denialshield-release.jks
           export KEYSTORE_PATH=keystore/denialshield-release.jks
           export KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD:-}"
           export KEY_ALIAS="${KEY_ALIAS:-}"
@@ -29,7 +32,8 @@ jobs:
         fi
         ./gradlew assembleRelease
         mkdir -p dist
-        cp app/build/outputs/apk/release/app-release.apk dist/denial-shield-latest.apk
+        cp app/build/outputs/apk/release/app-release.apk \
+          dist/denial-shield-latest.apk
       artifact_paths: "dist/denial-shield-latest.apk"
       upload_artifact: true
       artifact_name: "denial-shield-release-apk"
