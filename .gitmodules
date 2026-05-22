@@ -1,7 +1,8 @@
 [submodule "scripts/script-helpers"]
 	path = scripts/script-helpers
-	url = git@github.com:nikolareljin/script-helpers.git
+	url = https://github.com/nikolareljin/script-helpers.git
 	branch = production
 [submodule "scripts/ci-helpers"]
 	path = scripts/ci-helpers
-	url = git@github.com:nikolareljin/ci-helpers.git
+	url = https://github.com/nikolareljin/ci-helpers.git
+	branch = production
