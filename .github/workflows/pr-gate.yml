@@ -17,4 +17,4 @@ jobs:
       java_version: "17"
       lint_command: "./gradlew lint"
       test_command: "./gradlew test"
-      build_command: ""
+      build_command: "./gradlew assembleDebug"
