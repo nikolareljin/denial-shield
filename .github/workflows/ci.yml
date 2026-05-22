@@ -8,7 +8,9 @@ permissions:
 
 jobs:
   ci:
-    uses: nikolareljin/ci-helpers/.github/workflows/java.yml@production
+    # yamllint disable rule:line-length
+    uses: nikolareljin/ci-helpers/.github/workflows/java.yml@b5c8ac82ce3ce84f30ca3aa389c9075075dcab6a
+    # yamllint enable rule:line-length
     with:
       java_version: "17"
       # Android projects usually use gradlew assembleDebug for build

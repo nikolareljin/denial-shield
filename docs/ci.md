@@ -12,6 +12,7 @@ The project uses GitHub Actions for CI:
 
 - Pull requests run the PR Gate build/test workflow for linting, unit tests,
   and a debug build.
+- PR Gate skips pull requests limited to `docs/**` or Markdown changes.
 - Pull requests targeting `main` or `release/**` also run Gitleaks and
   security scan workflows.
 - Pushes to `main` or `master` run the CI workflow for post-merge validation.
