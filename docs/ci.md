@@ -10,7 +10,9 @@ DenialShield does not provide legal, medical, or other advice to any patient or 
 
 The project uses GitHub Actions for CI:
 
-- Pull requests run the PR Gate workflow for linting, unit tests, and a debug build.
+- Pull requests run the PR Gate build/test workflow for linting, unit tests,
+  and a debug build.
+- Pull requests also run Gitleaks and security scan workflows.
 - Pushes to `main` or `master` run the CI workflow for post-merge validation.
 
 ### Workflow Steps
