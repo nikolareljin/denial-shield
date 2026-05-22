@@ -8,14 +8,18 @@ DenialShield does not provide legal, medical, or other advice to any patient or 
 
 ## GitHub Actions
 
-The project uses GitHub Actions for CI. The workflow is triggered on every push and pull request to the `main` branch.
+The project uses GitHub Actions for CI:
+
+- Pull requests run the PR Gate workflow for linting, unit tests, and a debug build.
+- Pushes to `main` run the CI workflow for post-merge validation.
 
 ### Workflow Steps
 
 1. **Checkout Code**: Checks out the repository and initializes submodules.
 2. **Setup Java**: Sets up Java 17.
-3. **Build**: Runs `./gradlew assembleDebug` to ensure the app builds.
+3. **Lint**: Runs `./gradlew lint`.
 4. **Test**: Runs `./gradlew test` to ensure all tests pass.
+5. **Build**: Runs `./gradlew assembleDebug` to ensure the app builds.
 
 ## Local CI Testing
 
