@@ -18,5 +18,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Gitleaks scan
         uses: nikolareljin/ci-helpers/.github/actions/gitleaks-scan@production
