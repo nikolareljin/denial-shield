@@ -6,6 +6,9 @@ on:
       - "docs/**"
       - "**/*.md"
 
+permissions:
+  contents: read
+
 concurrency:
   group: pr-gate-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
