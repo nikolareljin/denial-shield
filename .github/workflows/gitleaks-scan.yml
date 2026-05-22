@@ -19,6 +19,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # gitleaks-action scans PR commit history. Shallow merge checkouts
+          # can miss the head parent.
           fetch-depth: 0
       - name: Gitleaks scan
         uses: nikolareljin/ci-helpers/.github/actions/gitleaks-scan@production
