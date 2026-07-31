@@ -1,0 +1,50 @@
+# Android
+*.iml
+.gradle
+# Gradle writes build/ per module (app/build), not only at the repo root.
+build/
+/local.properties
+.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Kotlin
+/bin
+/build
+
+# Tests
+.test
+
+# Keystores
+*.jks
+*.keystore
+keystore/keystore.properties
+
+# Google Services
+google-services.json
+
+# IDEs
+.vscode/
+.project
+.classpath
+.settings/
+*.launch
+*.factorypath
+.metadata/
+
+# System
+Thumbs.db
+desktop.ini
+
+# Models
+app/src/main/assets/*.bin
+
+/ignore/
+
+# Ignore Claude memory files outside the repo root
+CLAUDE.md
+!/CLAUDE.md

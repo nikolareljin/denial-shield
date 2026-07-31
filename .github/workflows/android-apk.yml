@@ -1,0 +1,42 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    # yamllint disable rule:line-length
+    uses: nikolareljin/ci-helpers/.github/workflows/release-build.yml@b5c8ac82ce3ce84f30ca3aa389c9075075dcab6a
+    # yamllint enable rule:line-length
+    secrets: inherit
+    with:
+      java_version: "17"
+      build_command: |
+        KEYSTORE_B64_VALUE="${KEYSTORE_B64:-}"
+        if [ -n "$KEYSTORE_B64_VALUE" ]; then
+          mkdir -p keystore
+          echo "$KEYSTORE_B64_VALUE" | \
+            base64 -d > keystore/denialshield-release.jks
+          export KEYSTORE_PATH=keystore/denialshield-release.jks
+          export KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD:-}"
+          export KEY_ALIAS="${KEY_ALIAS:-}"
+          export KEY_PASSWORD="${KEY_PASSWORD:-}"
+          echo "Signing enabled (keystore provided)."
+        else
+          echo "Signing skipped (no KEYSTORE_B64 secret)."
+        fi
+        ./gradlew assembleRelease
+        mkdir -p dist
+        cp app/build/outputs/apk/release/app-release.apk \
+          dist/denial-shield-demo.apk
+      artifact_paths: "dist/denial-shield-demo.apk"
+      upload_artifact: true
+      artifact_name: "denial-shield-demo-apk"
+      release_tag: "latest"
+      release_name: "Demo build"
+      generate_release_notes: false
