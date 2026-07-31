@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DenialShield — read the denial, draft the appeal, on the device</title>
+<meta name="description" content="An Android app that photographs a health-insurance denial letter, reads it on-device with ML Kit OCR, extracts the claim number, reason and cited policy language, and drafts the appeal. Nothing is uploaded.">
+<!-- NR-shield app mark, base64-encoded so the SVG's special characters need no URL-escaping in the data URI. -->
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzNCc+PHBhdGggZD0nTTE2IDEuNSAzLjUgNS44djkuM0MzLjUgMjMgOC42IDI4LjIgMTYgMzAuNWM3LjQtMi4zIDEyLjUtNy41IDEyLjUtMTUuNFY1LjhMMTYgMS41WicgZmlsbD0nIzE2NTk0QScgc3Ryb2tlPScjMUEyMjIwJyBzdHJva2Utd2lkdGg9JzEuMicgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCcvPjx0ZXh0IHg9JzE2JyB5PScyMScgdGV4dC1hbmNob3I9J21pZGRsZScgZmlsbD0nI2ZmZicgZm9udC1mYW1pbHk9J0FyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmJyBmb250LXdlaWdodD0nYm9sZCcgZm9udC1zaXplPScxMycgbGV0dGVyLXNwYWNpbmc9Jy0xJz5OUjwvdGV4dD48L3N2Zz4=">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Courier+Prime:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Greenbar computer-form stock — the paper an EOB actually arrives on. */
+  --paper:#F2F4F0;
+  --bar:#E3EAE0;
+  --paper-raised:#FAFBF8;
+  --ink:#1A2220;
+  --ink-soft:#56635E;
+  --rule:#D3DCD1;
+  --seal:#16594A;          /* shield green — the appeal side */
+  --seal-bright:#2E8B72;
+  --stamp:#A32B2B;         /* stamp oxide — denial marks ONLY */
+  --terminal:#14201D;
+  --dim:#A8BDB4;
+
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --typed:"Courier Prime",ui-monospace,Courier,monospace;
+
+  --gutter:clamp(1.25rem,5vw,4rem);
+  --measure:72rem;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--body);font-size:clamp(1rem,0.96rem + 0.2vw,1.0625rem);
+  line-height:1.6;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1.05;letter-spacing:-0.035em;margin:0}
+p{margin:0}
+a{color:inherit}
+code{font-family:var(--mono);font-size:.875em}
+.wrap{max-width:var(--measure);margin-inline:auto;padding-inline:var(--gutter)}
+/* the masthead is sticky, so an in-page jump has to clear it */
+[id]{scroll-margin-top:4.5rem}
+
+/* ---------- masthead ---------- */
+.masthead{
+  position:sticky;top:0;z-index:50;
+  background:color-mix(in srgb,var(--terminal) 92%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid rgba(168,189,180,.22);
+}
+.masthead .wrap{display:flex;align-items:center;gap:1.5rem;height:3.5rem}
+.brand{display:flex;align-items:center;gap:.55rem;font-family:var(--display);font-weight:800;letter-spacing:-0.03em;text-decoration:none;font-size:1.05rem;white-space:nowrap;color:#EFF3F0}
+.brand .logo{width:1.4rem;height:1.5rem;flex:none}
+.masthead .brand .logo path{stroke:#EFF3F0}
+.masthead nav{margin-left:auto;display:flex;gap:1.25rem;font-size:.875rem;font-weight:500}
+.masthead nav a{color:var(--dim);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px;white-space:nowrap}
+.masthead nav a:hover{color:#EFF3F0;border-bottom-color:#EFF3F0}
+.masthead nav a[aria-current="page"]{color:#EFF3F0;border-bottom-color:var(--seal-bright)}
+@media (max-width:48rem){.masthead nav a.opt{display:none}}
+
+/* ---------- hero band ---------- */
+.band{background:var(--terminal);color:#E7EDE9}
+.hero{padding-block:clamp(3rem,9vw,5rem) clamp(2.5rem,6vw,3.5rem)}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;color:var(--dim);display:block;margin-bottom:1.1rem}
+.hero h1{font-size:clamp(2.35rem,1.5rem + 3.8vw,3.9rem);max-width:18ch}
+.hero .lede{margin-top:1.35rem;max-width:60ch;font-size:clamp(1.0625rem,1rem + 0.35vw,1.2rem);color:var(--dim)}
+.hero .lede strong{color:#fff;font-weight:600}
+
+.cta-row{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:2rem;align-items:center}
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:var(--body);font-weight:600;font-size:.9375rem;
+  padding:.7rem 1.15rem;border-radius:2px;text-decoration:none;
+  border:1px solid #E7EDE9;color:#E7EDE9;background:transparent;
+  transition:transform .12s ease,background .12s ease,color .12s ease;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn svg{width:1.05rem;height:1.05rem;flex:none}
+.btn-primary{background:var(--seal);border-color:var(--seal);color:#fff}
+.btn-primary:hover{background:var(--seal-bright);border-color:var(--seal-bright);color:var(--terminal)}
+.btn-ghost:hover{background:#E7EDE9;color:var(--terminal)}
+
+/* ---------- the diptych: denial in, appeal out ---------- */
+.pipeline{padding-block:clamp(2.5rem,6vw,3.75rem) clamp(2.75rem,7vw,4.5rem)}
+.diptych{
+  display:grid;gap:1.25rem;align-items:start;
+  grid-template-columns:1fr;
+}
+@media (min-width:60rem){
+  .diptych{grid-template-columns:1fr minmax(13rem,.72fr) 1fr;gap:1.5rem}
+}
+
+.doc{
+  margin:0;border:1px solid var(--rule);border-radius:3px;overflow:hidden;
+  background:var(--paper-raised);box-shadow:0 1px 0 rgba(26,34,32,.04);position:relative;
+}
+.doc-head{
+  display:flex;align-items:center;gap:.5rem;
+  font-family:var(--mono);font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-soft);padding:.6rem .9rem;border-bottom:1px solid var(--rule);background:var(--bar);
+}
+.doc-head .dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--ink-soft);flex:none}
+.doc-denial .doc-head .dot{background:var(--stamp)}
+.doc-appeal .doc-head .dot{background:var(--seal)}
+.typed{
+  font-family:var(--typed);font-size:.72rem;line-height:1.75;margin:0;
+  padding:1rem .95rem 1.25rem;white-space:pre-wrap;color:#2C3A36;
+  /* greenbar: the alternating stripe a computer form is printed on */
+  background:repeating-linear-gradient(
+    to bottom,
+    var(--paper-raised) 0, var(--paper-raised) calc(1.75 * .72rem * 3),
+    var(--bar) calc(1.75 * .72rem * 3), var(--bar) calc(1.75 * .72rem * 6)
+  );
+}
+.typed mark{
+  background:rgba(46,139,114,.18);color:inherit;
+  border-bottom:1px solid var(--seal);padding:0 .1em;border-radius:1px;
+}
+.stamp{
+  position:absolute;top:3.1rem;right:.85rem;
+  font-family:var(--display);font-weight:800;font-size:.9rem;letter-spacing:.14em;
+  color:var(--stamp);border:2px solid var(--stamp);border-radius:2px;
+  padding:.2rem .5rem;transform:rotate(-8deg);opacity:.72;
+}
+
+/* the extraction column — the signature moment */
+.extract{display:flex;flex-direction:column;gap:.6rem;padding-block:.35rem}
+.extract-label{
+  font-family:var(--mono);font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-soft);display:flex;align-items:center;gap:.5rem;
+}
+.extract-label::after{content:"";flex:1;height:1px;background:var(--rule)}
+.field{
+  border:1px solid var(--rule);border-left:3px solid var(--seal);border-radius:2px;
+  background:var(--paper-raised);padding:.5rem .7rem;
+  opacity:0;transform:translateX(-.75rem);
+  transition:opacity .5s ease,transform .5s cubic-bezier(.2,.7,.3,1);
+  transition-delay:calc(var(--i) * 110ms);
+}
+.diptych.is-live .field{opacity:1;transform:none}
+.field b{
+  display:block;font-family:var(--mono);font-size:.625rem;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--seal);font-weight:700;margin-bottom:.15rem;
+}
+.field span{font-size:.8125rem;color:var(--ink);line-height:1.4;display:block}
+.field.is-empty span{color:var(--ink-soft);font-style:italic}
+
+/* ---------- sections ---------- */
+.section{padding-block:clamp(2.75rem,7vw,4.5rem);border-top:1px solid var(--rule)}
+.section-label{font-family:var(--mono);font-size:.75rem;color:var(--ink-soft);display:block;margin-bottom:.9rem}
+.section h2{font-size:clamp(1.6rem,1.25rem + 1.6vw,2.25rem);max-width:26ch}
+.section .intro{margin-top:1rem;max-width:62ch;color:var(--ink-soft)}
+
+/* the pipeline stages — a real sequence, so it is numbered like the form it reads */
+.stages{display:grid;gap:1rem;margin-top:2rem}
+@media (min-width:44rem){.stages{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:64rem){.stages{grid-template-columns:repeat(5,1fr);gap:.75rem}}
+.stage{border:1px solid var(--rule);border-top:2px solid var(--ink);border-radius:2px;padding:1rem .9rem;background:var(--paper-raised)}
+.stage .box{
+  font-family:var(--mono);font-size:.6875rem;letter-spacing:.08em;color:var(--ink-soft);
+  display:block;margin-bottom:.55rem;
+}
+.stage h3{font-family:var(--body);font-weight:600;font-size:.9375rem;letter-spacing:0;margin-bottom:.35rem}
+.stage p{font-size:.8125rem;color:var(--ink-soft);line-height:1.5}
+.stage .tech{font-family:var(--mono);font-size:.6875rem;color:var(--seal);margin-top:.6rem;display:block}
+
+/* architecture */
+.arch{margin-top:2rem;border:1px solid var(--rule);border-radius:3px;background:var(--paper-raised);padding:clamp(1rem,3vw,1.75rem);overflow-x:auto}
+.arch svg{display:block;min-width:34rem;width:100%;height:auto}
+
+/* engineering grid */
+.grid2{display:grid;gap:1.25rem;margin-top:2rem}
+@media (min-width:44rem){.grid2{grid-template-columns:repeat(2,1fr)}}
+.card{border:1px solid var(--rule);border-radius:3px;padding:1.35rem;background:var(--paper-raised)}
+.card h3{font-family:var(--body);font-weight:600;font-size:1rem;letter-spacing:0;margin-bottom:.5rem}
+.card p{font-size:.9rem;color:var(--ink-soft)}
+.card ul{margin:.75rem 0 0;padding-left:1.1rem;font-size:.875rem;color:var(--ink-soft)}
+.card li{margin-bottom:.3rem}
+.card li code{color:var(--ink)}
+
+.badges{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.75rem}
+.badges img{height:1.35rem}
+
+/* honest status */
+.status{
+  margin-top:2rem;border:1px solid var(--rule);border-left:3px solid var(--stamp);
+  border-radius:2px;background:var(--paper-raised);padding:1.35rem;
+}
+.status h3{font-family:var(--body);font-weight:600;font-size:1rem;letter-spacing:0;margin-bottom:.5rem}
+.status p{font-size:.9rem;color:var(--ink-soft);margin-bottom:.6rem}
+.status p:last-child{margin-bottom:0}
+.status a{color:var(--seal);font-weight:600}
+
+/* footer */
+footer{border-top:1px solid var(--rule);padding-block:2.5rem 3.5rem;font-size:.875rem;color:var(--ink-soft)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:1rem 2rem;align-items:center}
+footer a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--rule)}
+footer a:hover{color:var(--ink);border-bottom-color:var(--ink)}
+footer .credit{margin-left:auto}
+
+:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{animation:none !important;transition:none !important}
+  .field{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="DenialShield home">
+      <svg class="logo" viewBox="0 0 32 34" aria-hidden="true">
+        <path d="M16 1.5 3.5 5.8v9.3C3.5 23 8.6 28.2 16 30.5c7.4-2.3 12.5-7.5 12.5-15.4V5.8L16 1.5Z" fill="var(--seal)" stroke="var(--ink)" stroke-width="1.2" stroke-linejoin="round"/>
+        <text x="16" y="21" text-anchor="middle" fill="#fff" font-family="'Bricolage Grotesque',system-ui,sans-serif" font-weight="800" font-size="13" letter-spacing="-1">NR</text>
+      </svg>
+      DenialShield
+    </a>
+    <nav aria-label="Primary">
+      <a class="opt" href="#pipeline">How it works</a>
+      <a class="opt" href="#architecture">Architecture</a>
+      <a href="#engineering">Engineering</a>
+      <a href="about.html">About</a>
+      <a href="https://github.com/nikolareljin/denial-shield">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="band">
+    <div class="hero wrap">
+      <span class="eyebrow">android · on-device ocr · kotlin + compose</span>
+      <h1>A denial letter goes in. The appeal comes out.</h1>
+      <p class="lede">
+        DenialShield photographs a health-insurance denial, <strong>reads it on the phone</strong>,
+        pulls out the claim number, the stated reason and the policy language the insurer cites,
+        and drafts the appeal letter back. No account, no server, no upload — the letter never
+        leaves the device it was photographed on.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/nikolareljin/denial-shield">Read the source</a>
+        <a class="btn btn-ghost" href="#architecture">See the architecture</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="pipeline wrap" id="pipeline">
+    <div class="diptych" id="diptych">
+
+      <figure class="doc doc-denial">
+        <figcaption class="doc-head"><span class="dot" aria-hidden="true"></span>What arrives in the post</figcaption>
+        <span class="stamp" aria-hidden="true">DENIED</span>
+<pre class="typed">Really Great Health LLC
+123 Wellness Way, Suite 100
+Healthville, USA 12345
+
+Explanation of Benefits - Service Denial
+
+Date: December 31, 2025
+
+Claim Number: <mark>0000000000</mark>
+Policy Number: 111222333444
+
+Dear John Smith,
+
+We have denied the following service:
+
+Service/Device: <mark>Continuous Glucose
+Monitor (CGM), Model X</mark>
+Date of Service: December 15, 2025
+
+Reason for Denial:
+The requested medical device is <mark>not
+covered under your current policy</mark>.
+Coverage is limited to a diagnosis of
+Type 1 Diabetes; our records indicate
+Type 2 Diabetes.
+
+According to your policy language:
+<mark>"Continuous Glucose Monitors are a
+covered benefit only for members with
+a confirmed diagnosis of Type 1
+Diabetes Mellitus..."</mark>
+
+You have the right to appeal within
+180 days of the date of this letter.</pre>
+      </figure>
+
+      <div class="extract" aria-label="Fields read from the letter">
+        <span class="extract-label">read on device</span>
+        <div class="field" style="--i:0"><b>Claim number</b><span>0000000000</span></div>
+        <div class="field" style="--i:1"><b>Service</b><span>Continuous Glucose Monitor (CGM), Model X</span></div>
+        <div class="field" style="--i:2"><b>Denial reason</b><span>Not covered under current policy</span></div>
+        <div class="field" style="--i:3"><b>Policy language cited</b><span>“…covered benefit only for members with a confirmed diagnosis of Type 1 Diabetes Mellitus…”</span></div>
+        <div class="field is-empty" style="--i:4"><b>Denial code</b><span>none printed on this letter</span></div>
+      </div>
+
+      <figure class="doc doc-appeal">
+        <figcaption class="doc-head"><span class="dot" aria-hidden="true"></span>What you send back</figcaption>
+<pre class="typed">Subject: Appeal for Denial of Claim
+0000000000 - John Smith
+
+[INSURANCE COMPANY NAME]
+[INSURANCE COMPANY ADDRESS]
+
+Dear Appeals Department,
+
+I am writing to formally appeal the
+denial of claim number 0000000000 for
+services provided on 12/15/2025.
+
+Reason for denial provided: not covered
+under your current policy.
+
+According to my policy language:
+"Continuous Glucose Monitors are a
+covered benefit only for members with
+a confirmed diagnosis of Type 1
+Diabetes Mellitus..."
+
+I believe this denial is in error
+because the services provided are
+medically necessary and covered under
+the terms of my policy as stated above.
+
+[INSERT SUPPORTING RECORDS AND DATES]
+
+Thank you,
+
+John Smith</pre>
+      </figure>
+
+    </div>
+  </section>
+
+  <section class="section wrap" id="how">
+    <span class="section-label">the pipeline</span>
+    <h2>Five stages, all of them local</h2>
+    <p class="intro">
+      Each stage hands text to the next. Nothing in this chain opens a socket, which is what
+      makes the privacy claim on the front of the app checkable rather than promised.
+    </p>
+    <div class="stages">
+      <article class="stage">
+        <span class="box">STAGE 01</span>
+        <h3>Capture</h3>
+        <p>Camera, gallery or file picker — a denial arrives as paper, a screenshot, or a PDF in email, and all three have to work.</p>
+        <span class="tech">ActivityResultContracts</span>
+      </article>
+      <article class="stage">
+        <span class="box">STAGE 02</span>
+        <h3>Recognize</h3>
+        <p>On-device text recognition for photos, embedded-text extraction for PDFs. Large captures are subsampled before decode so a 50MP photo does not exhaust memory.</p>
+        <span class="tech">ML Kit · PDFBox</span>
+      </article>
+      <article class="stage">
+        <span class="box">STAGE 03</span>
+        <h3>Extract</h3>
+        <p>Sentence-level scan for the vocabulary that carries meaning in a denial — coverage, exclusion, medical necessity, prior authorization — keeping the passages an appeal has to answer.</p>
+        <span class="tech">Kotlin</span>
+      </article>
+      <article class="stage">
+        <span class="box">STAGE 04</span>
+        <h3>Draft</h3>
+        <p>Engines are tried in preference order. One that cannot run on this device declines and the next answers, so the user always ends up with a letter.</p>
+        <span class="tech">RebuttalEngine</span>
+      </article>
+      <article class="stage">
+        <span class="box">STAGE 05</span>
+        <h3>Export</h3>
+        <p>Rendered to PDF and handed to the share sheet — email, messaging, print — through a scoped content URI rather than a raw file path.</p>
+        <span class="tech">FileProvider</span>
+      </article>
+    </div>
+  </section>
+
+  <section class="section wrap" id="architecture">
+    <span class="section-label">system shape</span>
+    <h2>Everything inside one boundary</h2>
+    <p class="intro">
+      Compose talks to a ViewModel, the ViewModel talks to a repository, and the repository owns
+      the database. Documents enter through a separate path and meet the claim at the drafting
+      stage. The dashed line is the device edge: no arrow crosses it.
+    </p>
+
+    <div class="arch">
+      <svg viewBox="0 0 760 400" role="img" aria-label="Architecture: Compose UI to ViewModel to repository to Room; documents flow through OCR and extraction into the rebuttal engines; nothing crosses the device boundary.">
+        <defs>
+          <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0 0 10 5 0 10z" fill="#56635E"/>
+          </marker>
+          <style>
+            .bx{fill:#FAFBF8;stroke:#D3DCD1;stroke-width:1.5}
+            .bx-a{fill:#FAFBF8;stroke:#16594A;stroke-width:1.5}
+            .bx-off{fill:#F2F4F0;stroke:#D3DCD1;stroke-width:1.5;stroke-dasharray:4 3}
+            .t{font-family:'Public Sans',sans-serif;font-size:13px;fill:#1A2220;font-weight:600}
+            .s{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#56635E}
+            .ln{stroke:#56635E;stroke-width:1.4;fill:none;marker-end:url(#a)}
+            .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#16594A;letter-spacing:.04em}
+          </style>
+        </defs>
+
+        <rect x="8" y="8" width="744" height="384" rx="6" fill="none" stroke="#16594A" stroke-width="1.5" stroke-dasharray="7 5"/>
+        <text class="lbl" x="24" y="30">THIS DEVICE — no network call in any path below</text>
+
+        <rect class="bx" x="34" y="60" width="180" height="62" rx="3"/>
+        <text class="t" x="50" y="86">Compose screens</text>
+        <text class="s" x="50" y="104">Home · Intake · Detail</text>
+
+        <rect class="bx" x="34" y="158" width="180" height="62" rx="3"/>
+        <text class="t" x="50" y="184">MainViewModel</text>
+        <text class="s" x="50" y="202">StateFlow · status</text>
+
+        <rect class="bx" x="34" y="256" width="180" height="62" rx="3"/>
+        <text class="t" x="50" y="282">DenialRepository</text>
+        <text class="s" x="50" y="300">Room · Flow</text>
+
+        <path class="ln" d="M124 122 V152"/>
+        <path class="ln" d="M124 220 V250"/>
+
+        <rect class="bx" x="290" y="60" width="180" height="62" rx="3"/>
+        <text class="t" x="306" y="86">DocumentProcessor</text>
+        <text class="s" x="306" y="104">ML Kit OCR · PDFBox</text>
+
+        <rect class="bx" x="290" y="158" width="180" height="62" rx="3"/>
+        <text class="t" x="306" y="184">Policy extraction</text>
+        <text class="s" x="306" y="202">sentence scan</text>
+
+        <rect class="bx-a" x="290" y="256" width="180" height="62" rx="3"/>
+        <text class="t" x="306" y="282">RebuttalGenerator</text>
+        <text class="s" x="306" y="300">engines in order</text>
+
+        <path class="ln" d="M380 122 V152"/>
+        <path class="ln" d="M380 220 V250"/>
+        <path class="ln" d="M214 287 H284"/>
+
+        <rect class="bx-a" x="546" y="236" width="180" height="48" rx="3"/>
+        <text class="t" x="562" y="258">Template engine</text>
+        <text class="s" x="562" y="274">always available</text>
+
+        <rect class="bx-off" x="546" y="300" width="180" height="48" rx="3"/>
+        <text class="t" x="562" y="322" fill="#56635E">On-device model</text>
+        <text class="s" x="562" y="338">not configured here</text>
+
+        <path class="ln" d="M470 279 H540"/>
+        <path class="ln" d="M470 296 C505 296 505 322 540 322"/>
+
+        <rect class="bx" x="546" y="60" width="180" height="62" rx="3"/>
+        <text class="t" x="562" y="86">PdfExporter</text>
+        <text class="s" x="562" y="104">FileProvider · share</text>
+
+        <path class="ln" d="M636 232 V128"/>
+      </svg>
+    </div>
+  </section>
+
+  <section class="section wrap" id="engineering">
+    <span class="section-label">how it is built and kept</span>
+    <h2>The pipeline around the pipeline</h2>
+    <p class="intro">
+      Every push runs the same gates, and every reusable workflow is pinned to a commit SHA
+      rather than a tag — a tag can be force-moved, and these jobs hold signing secrets.
+    </p>
+
+    <div class="badges">
+      <a href="https://github.com/nikolareljin/denial-shield/actions/workflows/android-apk.yml"><img src="https://github.com/nikolareljin/denial-shield/actions/workflows/android-apk.yml/badge.svg" alt="Build APK workflow status"></a>
+      <a href="https://github.com/nikolareljin/denial-shield/actions/workflows/security-scan.yml"><img src="https://github.com/nikolareljin/denial-shield/actions/workflows/security-scan.yml/badge.svg" alt="Security scan workflow status"></a>
+      <a href="https://github.com/nikolareljin/denial-shield/actions/workflows/gitleaks-scan.yml"><img src="https://github.com/nikolareljin/denial-shield/actions/workflows/gitleaks-scan.yml/badge.svg" alt="Gitleaks scan workflow status"></a>
+    </div>
+
+    <div class="grid2">
+      <article class="card">
+        <h3>Continuous integration</h3>
+        <p>Shared workflows live in a separate library and are consumed by every repository, so a fix to the build lands everywhere at once.</p>
+        <ul>
+          <li><code>pr-gate</code> — lint, test, build; cancels superseded runs, skips docs-only changes</li>
+          <li><code>ci</code> — the same three on every push to <code>main</code></li>
+          <li><code>android-apk</code> — release build, signed when the keystore secret exists, debug-signed when it does not</li>
+          <li>Least-privilege <code>permissions:</code> declared per workflow</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>Security scanning</h3>
+        <p>Two scanners on every push and pull request, with the results filed where they are actually read.</p>
+        <ul>
+          <li><code>trivy</code> — dependency and config scan, SARIF uploaded to the Security tab</li>
+          <li><code>gitleaks</code> — full history, <code>fetch-depth: 0</code>; a shallow clone would miss a secret that was committed and later removed</li>
+          <li>SARIF upload is skipped for fork pull requests, whose token cannot write it</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="status">
+      <h3>What this build is</h3>
+      <p>
+        This repository is a public showcase build. Drafting runs through the template engine:
+        it fills a fixed appeal structure from the captured claim and leaves bracketed
+        placeholders where a person has to write the rest. The on-device model path is present
+        as an interface and is not configured here.
+      </p>
+      <p>
+        Document capture, OCR, PDF extraction, policy-language extraction, storage and export
+        are the real implementations and run as described.
+      </p>
+      <p>
+        A production implementation exists.
+        <a href="https://github.com/nikolareljin">Contact the author</a> about requirements.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© Nik Reljin — proprietary licence, see the repository</span>
+    <a href="about.html">About</a>
+    <a href="https://github.com/nikolareljin/denial-shield">Source</a>
+    <span class="credit"><a href="https://ko-fi.com/nikolareljin">Buy me a coffee <span aria-hidden="true">☕</span></a></span>
+  </div>
+</footer>
+
+<script>
+// The extracted fields arrive when the diptych does — the page's one orchestrated
+// moment, and the product's actual thesis: the letter is read, not retyped.
+(function () {
+  var el = document.getElementById('diptych');
+  if (!el) return;
+  if (!('IntersectionObserver' in window) ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.classList.add('is-live');
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { el.classList.add('is-live'); io.disconnect(); }
+    });
+  }, { threshold: 0.25 });
+  io.observe(el);
+})();
+</script>
+
+</body>
+</html>
