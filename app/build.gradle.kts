@@ -52,9 +52,6 @@ android {
             useSupportLibrary = true
         }
 
-        val hfToken = providers.gradleProperty("HF_TOKEN").orNull ?: ""
-        buildConfigField("String", "HF_TOKEN", "\"$hfToken\"")
-        
         ndk {
             abiFilters.addAll(listOf("x86_64", "armeabi-v7a", "arm64-v8a"))
         }
@@ -83,7 +80,6 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -125,9 +121,6 @@ dependencies {
 
     // Icons
     implementation("androidx.compose.material:material-icons-extended")
-
-    // Local AI (MediaPipe GenAI)
-    implementation("com.google.mediapipe:tasks-genai:0.10.11")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

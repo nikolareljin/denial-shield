@@ -8,9 +8,8 @@ import com.denialshield.data.model.DenialClaim
 import com.denialshield.data.model.Evidence
 import com.denialshield.data.model.UserInfo
 import com.denialshield.data.repository.DenialRepository
+import com.denialshield.rebuttal.RebuttalGenerator
 import com.denialshield.utils.DocumentProcessor
-import com.denialshield.utils.AiRebuttalGenerator
-import com.denialshield.utils.RebuttalGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +20,7 @@ import kotlinx.coroutines.launch
 class MainViewModel(
     private val repository: DenialRepository,
     private val documentProcessor: DocumentProcessor,
-    private val aiGenerator: AiRebuttalGenerator
+    private val rebuttalGenerator: RebuttalGenerator
 ) : ViewModel() {
 
     val userInfo: StateFlow<UserInfo?> = repository.userInfo.stateIn(
@@ -90,7 +89,8 @@ class MainViewModel(
                 )
                 repository.updateClaim(updatedClaim)
                 
-                // Automatically trigger AI generation once evidence is gathered
+                // Evidence capture flows straight into a draft: the user lands
+                // on the detail screen with a letter already there.
                 generateRebuttal(claimId)
             }
             _isProcessing.value = false
@@ -100,11 +100,11 @@ class MainViewModel(
     fun generateRebuttal(claimId: Long) {
         viewModelScope.launch {
             _isProcessing.value = true
-            _statusMessage.value = "Starting AI rebuttal..."
+            _statusMessage.value = "Preparing rebuttal..."
             val claim = repository.getClaimById(claimId)
             val user = userInfo.value
             if (claim != null && user != null) {
-                val rebuttal = aiGenerator.generateRebuttal(user, claim) { status ->
+                val rebuttal = rebuttalGenerator.generate(user, claim) { status ->
                     _statusMessage.value = status
                 }
                 repository.updateClaim(claim.copy(

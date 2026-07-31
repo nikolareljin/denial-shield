@@ -33,10 +33,10 @@ jobs:
         ./gradlew assembleRelease
         mkdir -p dist
         cp app/build/outputs/apk/release/app-release.apk \
-          dist/denial-shield-latest.apk
-      artifact_paths: "dist/denial-shield-latest.apk"
+          dist/denial-shield-demo.apk
+      artifact_paths: "dist/denial-shield-demo.apk"
       upload_artifact: true
-      artifact_name: "denial-shield-release-apk"
+      artifact_name: "denial-shield-demo-apk"
       release_tag: "latest"
-      release_name: "Latest"
+      release_name: "Demo build"
       generate_release_notes: false

@@ -1,6 +1,8 @@
 # Android
 *.iml
 .gradle
+# Gradle writes build/ per module (app/build), not only at the repo root.
+build/
 /local.properties
 .idea/
 .DS_Store

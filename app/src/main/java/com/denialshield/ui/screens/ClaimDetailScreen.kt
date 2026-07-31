@@ -126,7 +126,7 @@ fun ClaimDetailScreen(
                         Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
                             CircularProgressIndicator()
                             Text(
-                                statusMessage ?: "AI is generating your rebuttal...",
+                                statusMessage ?: "Preparing your rebuttal...",
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -137,14 +137,28 @@ fun ClaimDetailScreen(
                             onClick = { viewModel.generateRebuttal(claim.id) },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Generate AI Rebuttal")
+                            Text("Generate Rebuttal")
                         }
                     } else {
-                        Text(
-                            "Generated Rebuttal",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Generated Rebuttal",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            // Which engine wrote this draft. Shown next to the
+                            // letter itself, so it travels with what the user
+                            // is about to read.
+                            AssistChip(
+                                onClick = {},
+                                enabled = false,
+                                label = { Text("Template engine") }
+                            )
+                        }
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(

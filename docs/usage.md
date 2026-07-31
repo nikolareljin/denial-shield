@@ -4,7 +4,7 @@ This guide explains how to use the automation scripts and the application.
 
 ## Disclaimer
 
-DenialShield does not provide legal, medical, or other advice to any patient or insurer. The app exists only to demonstrate on-device AI workflows and should not be used in real-world scenarios. Use at your own risk; the authors accept no responsibility or liability for any use of this software.
+DenialShield does not provide legal, medical, or other advice to any patient or insurer. This repository is a public showcase build and should not be used in real-world scenarios. Use at your own risk; the authors accept no responsibility or liability for any use of this software.
 
 ## Automation Scripts
 
@@ -32,10 +32,13 @@ DenialShield does not provide legal, medical, or other advice to any patient or 
 3. **Open**: Use a File Manager on your phone to find and open the `.apk` file.
 4. **Permissions**: If prompted, allow "Install from Unknown Sources".
 
-## AI Model Setup
+## Rebuttal Generation
 
-On first run, the app downloads a public LiteRT `.task` model (SmolLM-135M-Instruct) and stores it as `model.bin` under `Android/data/com.denialshield/files/models/`. This requires internet access and an ARM64 device/emulator to run the native GenAI runtime. If the model is missing or the runtime is unavailable, the app falls back to the template-based generator.
+Rebuttals are produced by the template engine: it substitutes the captured
+claim details into a fixed appeal-letter structure and leaves bracketed
+placeholders where a person has to supply the rest. Generation is instant
+and needs no network.
 
-Manual override (optional): You can preinstall a model by copying it to `Android/data/com.denialshield/files/models/model.bin` on the device before launching the app.
+The on-device model path is not configured in this build.
 
 For release and Play signing details, see the [Release Guide](release.md).

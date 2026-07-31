@@ -38,7 +38,7 @@ import com.denialshield.data.repository.DenialRepository
 import com.denialshield.ui.navigation.DenialShieldNavGraph
 import com.denialshield.ui.theme.DenialShieldTheme
 import com.denialshield.ui.viewmodel.MainViewModel
-import com.denialshield.utils.AiRebuttalGenerator
+import com.denialshield.rebuttal.RebuttalGenerator
 import com.denialshield.utils.DocumentProcessor
 
 class MainActivity : ComponentActivity() {
@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
 
         val repository = DenialRepository(db.denialDao())
         val documentProcessor = DocumentProcessor(applicationContext)
-        val aiGenerator = AiRebuttalGenerator(applicationContext)
+        val rebuttalGenerator = RebuttalGenerator()
 
         setContent {
             var showDisclaimer by remember { mutableStateOf(!disclaimerAccepted) }
@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
                             factory = object : androidx.lifecycle.ViewModelProvider.Factory {
                                 override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                                     @Suppress("UNCHECKED_CAST")
-                                    return MainViewModel(repository, documentProcessor, aiGenerator) as T
+                                    return MainViewModel(repository, documentProcessor, rebuttalGenerator) as T
                                 }
                             }
                         )
@@ -112,7 +112,7 @@ fun DisclaimerScreen(onUnderstandClicked: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "This app uses on-device AI and is for informational purposes only. It is not a substitute for professional legal or medical advice. Always consult with a qualified professional for any legal or medical concerns.",
+            text = "This app drafts appeal letters and is for informational purposes only. It is not a substitute for professional legal or medical advice. Always consult with a qualified professional for any legal or medical concerns.",
             color = Color.White,
             textAlign = TextAlign.Center
         )

@@ -4,7 +4,7 @@ This guide explains the Continuous Integration (CI) setup for `denial-shield`.
 
 ## Disclaimer
 
-DenialShield does not provide legal, medical, or other advice to any patient or insurer. The app exists only to demonstrate on-device AI workflows and should not be used in real-world scenarios. Use at your own risk; the authors accept no responsibility or liability for any use of this software.
+DenialShield does not provide legal, medical, or other advice to any patient or insurer. This repository is a public showcase build and should not be used in real-world scenarios. Use at your own risk; the authors accept no responsibility or liability for any use of this software.
 
 ## GitHub Actions
 
