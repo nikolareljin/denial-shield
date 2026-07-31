@@ -102,3 +102,11 @@ This project is licensed under a **Custom Proprietary License**.
 - **Modifications**: No modifications are permitted without prior written consent from the Creator.
 
 See the [LICENSE](LICENSE) file for the full legal terms.
+
+---
+
+## Clone traffic
+
+![Clone traffic](https://raw.githubusercontent.com/nikolareljin/stats/main/charts/denial-shield.svg)
+
+_Updated daily. Total and unique cloners over the last 14 days._
