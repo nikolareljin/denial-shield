@@ -26,3 +26,7 @@ jobs:
         # yamllint disable rule:line-length
         uses: nikolareljin/ci-helpers/.github/actions/gitleaks-scan@production
         # yamllint enable rule:line-length
+        with:
+          # The default is false: a scan that finds secrets only prints a
+          # count and the job stays green.
+          fail_on_findings: "true"
